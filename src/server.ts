@@ -1,14 +1,69 @@
-import express from 'express'
+import express, { Application } from 'express'
+import { ForecastController } from './controllers/forecast'
+import { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types'
+import { Server } from '@overnightjs/core'
+import * as http from 'http'
+import * as OpenApiValidator from 'express-openapi-validator'
 import swaggerUi from 'swagger-ui-express'
-import swaggerDocs from './swagger.json'
+import apiSchema from './swagger.json'
+import cors from 'cors'
 
-const app = express()
+export class SetupServer extends Server {
+  private server?: http.Server
 
-app.use(express.json())
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
+  constructor(private port = 3000) {
+    super()
+  }
 
-app.get('/api', (req, res) => {
-  return res.json('Hello World!')
-})
+  public init(): void {
+    this.setupExpress()
+    this.docsSetup()
+    this.setupController()
+  }
 
-app.listen(3000)
+  private setupExpress(): void {
+    this.app.use(express.json())
+    this.app.use(express.urlencoded({ extended: true }))
+    this.app.use(cors({ origin: '*' }))
+  }
+
+  private docsSetup(): void {
+    this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(apiSchema))
+    this.app.use(
+      OpenApiValidator.middleware({
+        apiSpec: apiSchema as OpenAPIV3.Document,
+        validateRequests: true, //we do it
+        validateResponses: true
+      })
+    )
+  }
+
+  private setupController(): void {
+    const forecastController = new ForecastController()
+    this.addControllers([forecastController])
+  }
+
+  public getApp(): Application {
+    return this.app
+  }
+
+  public async close(): Promise<void> {
+    if (this.server) {
+      await new Promise((resolve, reject) => {
+        this.server?.close((err) => {
+          if (err) {
+            return reject(err)
+          }
+          resolve(true)
+        })
+      })
+    }
+  }
+
+  public start(): void {
+    this.server = this.app.listen(this.port, () => {
+      console.log('Server listening on port: ' + this.port)
+      // logger.info('Server listening on port: ' + this.port)
+    })
+  }
+}

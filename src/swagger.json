@@ -10,5 +10,60 @@
       "url": "http://localhost:3000/v1",
       "description": "API de desenvolvimento"
     }
-  ]
+  ],
+  "paths": {
+    "/forecast": {
+      "get": {
+        "description": "forecast api functional",
+        "responses": {
+          "200": {
+            "description": "The list of forecast has been returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ok": {
+        "type": "string",
+        "example": "ok"
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ok"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "number"
+          },
+          "error": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "documentation": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
 }
